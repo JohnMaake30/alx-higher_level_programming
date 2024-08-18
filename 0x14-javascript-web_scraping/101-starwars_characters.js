@@ -1,40 +1,35 @@
 #!/usr/bin/node
-/*
-Prints all characters of a Star Wars movie
-*/
+// using Star Wars API, prints all `characters` of a given film, in order
 const request = require('request');
-const url = 'https://swapi-api.alx-tools.com/api/films';
-const movieId = process.argv[2];
 
-request(url, (error, response, body) => {
+function getCharName (url) {
+  return new Promise((resolve, reject) => {
+    request(url, (error, response, body) => {
+      if (error) {
+        reject(error);
+      }
+      resolve(JSON.parse(body).name);
+    });
+  });
+}
+
+async function charsInFilm (urlList) {
+  try {
+    let name;
+    for (const url of urlList) {
+      name = await getCharName(url);
+      console.log(name);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+const filmsURL = 'https://swapi-api.hbtn.io/api/films/' + process.argv[2];
+request(filmsURL, function (error, response, body) {
   if (error) {
     console.error(error);
-    process.exit(1);
   }
-  if (response.statusCode === 200) {
-    // Parse the response body as JSON
-    const filmsData = JSON.parse(body).results;
-
-    // Find movie with the given id
-    const movie = filmsData.find(film => film.episode_id === parseInt(movieId));
-    if (!movie) {
-      console.log('Movie not found.');
-      process.exit(1);
-    }
-
-    // Print characters fro the movie
-    const characters = movie.characters;
-    for (const characterUrl of characters) {
-      request(characterUrl, (charError, charResponse, charBody) => {
-        if (charError) {
-          console.error(charError);
-          return;
-        }
-        if (charResponse.statusCode === 200) {
-          const character = JSON.parse(charBody);
-          console.log(character.name);
-        }
-      });
-    }
-  }
+  const urlList = JSON.parse(body).characters;
+  charsInFilm(urlList);
 });
